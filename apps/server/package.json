@@ -1,0 +1,25 @@
+{
+  "name": "@fiona/server",
+  "version": "1.0.0",
+  "description": "Backend for Finance Tracker",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astra463/fiona.git"
+  },
+  "author": "Sergei Shilov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astra463/fiona/issues"
+  },
+  "homepage": "https://github.com/astra463/fiona#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  }
+}
