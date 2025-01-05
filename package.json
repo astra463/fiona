@@ -7,9 +7,11 @@
     "apps/server",
     "apps/bot"
   ],
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node apps/server/index.js"
+    "start": "node apps/server/index.js",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,16 @@
   },
   "homepage": "https://github.com/astra463/fiona#readme",
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.3",
+    "globals": "^15.14.0",
+    "typescript-eslint": "^8.19.0"
   }
 }

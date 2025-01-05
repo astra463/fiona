@@ -1,7 +1,7 @@
 import express from 'express';
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import fs from 'fs/promises'; // Для работы с асинхронным чтением файлов
+import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import categoriesRoutes from './routes/categories.js';
 import transactionsRoutes from './routes/transactions.js';
