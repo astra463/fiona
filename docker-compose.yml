@@ -4,9 +4,10 @@ services:
     build:
       context: ./apps/server
     ports:
-      - '3000:3000'
+      - '${PORT}:3000'
     environment:
       - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./db:/data/db
     restart: unless-stopped

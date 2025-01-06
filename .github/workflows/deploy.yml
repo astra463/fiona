@@ -9,12 +9,23 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      # 1. Клонирование репозитория
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # 2. Перенос Docker Compose на Raspberry Pi
-      - name: Deploy via Docker Compose
+      - name: Create .env file
         run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+
+      - name: Copy files to Raspberry Pi
+        run: |
+          scp -r . care1aker@192.168.1.120:/home/care1aker/fiona/
+
+      - name: Deploy on Raspberry Pi
+        run: |
+          ssh care1aker@192.168.1.120 << 'EOF'
+          cd /home/care1aker/fiona
           docker-compose down
           docker-compose up -d --build
+          EOF
