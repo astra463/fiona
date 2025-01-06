@@ -1,0 +1,20 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      # 1. Клонирование репозитория
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      # 2. Перенос Docker Compose на Raspberry Pi
+      - name: Deploy via Docker Compose
+        run: |
+          docker-compose down
+          docker-compose up -d --build

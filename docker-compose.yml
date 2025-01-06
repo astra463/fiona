@@ -17,9 +17,3 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
     restart: unless-stopped
-
-  database:
-    image: sqlite3
-    volumes:
-      - ./db:/data/db
-    restart: unless-stopped
