@@ -12,6 +12,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
+      - name: Add Raspberry Pi to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 192.168.1.120 >> ~/.ssh/known_hosts
+
       - name: Create .env file
         run: |
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
