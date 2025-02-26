@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { bot } from '../../bot.js';
 import handleError from '../../utils/handleError.js';
-
+import { default_categories } from '../constants/default_categories.js';
+import { findCategoryById } from './handleAddTransaction.js';
 export async function handleShowTransactions(chatId, token) {
   bot.sendMessage(chatId, 'Выберите период для просмотра транзакций:', {
     reply_markup: {
@@ -39,14 +40,13 @@ export async function handleShowTransactions(chatId, token) {
           bot.sendMessage(chatId, 'За выбранный период транзакций нет.');
         } else {
           const transactionList = transactions
-            .map(
-              (t) =>
-                `💰 Сумма: ${t.amount}, Категория: ${
-                  t.category_name
-                }, Описание: ${t.description || 'нет'}, ${formatter.format(
-                  new Date(t.date)
-                )}`
-            )
+            .map((t) => {
+              return `
+💰 Сумма: ${t.amount}, 
+Категория: ${findCategoryById(default_categories, t.category_id).name}, 
+Описание: ${t.description || 'нет'}, 
+${formatter.format(new Date(t.date))}`;
+            })
             .join('\n');
           bot.sendMessage(chatId, `Ваши транзакции:\n\n${transactionList}`);
         }
@@ -54,6 +54,7 @@ export async function handleShowTransactions(chatId, token) {
         bot.sendMessage(chatId, 'Ошибка при получении транзакций.');
       }
     } catch (error) {
+      console.log(error);
       handleError(chatId, error, 'Ошибка при получении транзакций.');
     }
   });

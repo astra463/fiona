@@ -1,12 +1,8 @@
-function handleError(
-  bot,
-  logger,
-  chatId,
-  error,
-  message = 'Произошла ошибка.'
-) {
+import { bot } from '../bot.js';
+
+function handleError(chatId, error, message = 'Произошла ошибка.') {
   bot.sendMessage(chatId, message);
-  logger.error(error.message);
+  console.error(error.message);
 }
 
 export default handleError;

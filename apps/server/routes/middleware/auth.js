@@ -25,15 +25,11 @@ export function authenticateToken(req, res, next) {
       .json({ error: 'Access token is missing or invalid' });
   }
 
-  console.log('Extracted Token:', token);
-
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       console.error('Token verification failed:', err.message);
       return res.status(403).json({ error: 'Invalid token' });
     }
-
-    console.log('Decoded User from Token:', user);
 
     req.user = user;
     next();

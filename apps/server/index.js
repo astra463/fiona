@@ -3,7 +3,6 @@ import sqlite3 from 'sqlite3';
 import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import categoriesRoutes from './routes/categories.js';
 import transactionsRoutes from './routes/transactions.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
@@ -54,7 +53,6 @@ const initSqlPath = path.resolve(__dirname, '../../db/init.sql');
 app.use(express.json());
 
 // Передача подключения `db` в маршруты
-app.use('/api/categories', categoriesRoutes(db));
 app.use('/api/transactions', transactionsRoutes(db));
 app.use('/api/auth', authRoutes(db));
 app.use('/api/users', usersRoutes(db));

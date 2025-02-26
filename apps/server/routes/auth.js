@@ -12,7 +12,6 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-// Функция для создания роутера
 export default function authRoutes(db) {
   const router = express.Router();
 
@@ -24,8 +23,6 @@ export default function authRoutes(db) {
       console.error('chat_id is missing!');
       return res.status(400).json({ error: 'chat_id is required' });
     }
-
-    console.log(`Received chat_id: ${chat_id}, name: ${name}`);
 
     db.get(
       'SELECT * FROM users WHERE telegram_chat_id = ?',
@@ -44,9 +41,10 @@ export default function authRoutes(db) {
           return res.json({ message: 'Welcome back!', token });
         } else {
           console.log('User not found, creating new user...');
+
           db.run(
             'INSERT INTO users (telegram_chat_id, name) VALUES (?, ?)',
-            [chat_id, name || 'Anonymous'],
+            [chat_id, name],
             function (err) {
               if (err) {
                 console.error('Error inserting new user:', err.message);

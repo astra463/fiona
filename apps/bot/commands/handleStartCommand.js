@@ -9,6 +9,7 @@ export async function handleStartCommand(msg) {
   const name = msg.from.first_name || 'User';
 
   logger.info(`Получена команда /start от chatId: ${chatId}, name: ${name}`);
+
   try {
     const response = await axios.post(
       'http://localhost:3000/api/auth/telegram',
@@ -19,69 +20,74 @@ export async function handleStartCommand(msg) {
     );
 
     if (response.status === 200) {
-      const { token } = response.data;
+      const { token, net_worth } = response.data;
       userTokens[chatId] = token;
 
-      bot.sendMessage(
-        chatId,
-        `👋 Добро пожаловать, ${name}!\n\n` +
-          `Чтобы начать, введите текущий бюджет (сумму, которая у вас сейчас на руках):`
-      );
+      if (net_worth !== null) {
+        bot.sendMessage(chatId, `👋 Добро пожаловать, ${name}!`, {
+          reply_markup: {
+            keyboard: [
+              ['💰 Мой баланс', '💳 Добавить транзакцию'],
+              ['📜 Показать транзакции'],
+            ],
+            resize_keyboard: true,
+          },
+        });
+      } else {
+        bot.sendMessage(
+          chatId,
+          `👋 Добро пожаловать, ${name}!
 
-      bot.once('message', async (msg) => {
-        const budgetInput = msg.text.trim();
-        const netWorth = parseFloat(budgetInput);
+Чтобы начать, введите текущий бюджет (сумму, которая у вас сейчас на руках):`
+        );
 
-        if (isNaN(netWorth) || netWorth < 0) {
-          bot.sendMessage(
-            chatId,
-            '❌ Пожалуйста, введите корректное число для вашего бюджета.'
-          );
-          return;
-        }
+        bot.once('message', async (msg) => {
+          const budgetInput = msg.text.trim();
+          const netWorth = parseFloat(budgetInput);
 
-        try {
-          const updateResponse = await axios.post(
-            'http://localhost:3000/api/users/update-net-worth',
-            {
-              chat_id: chatId,
-              net_worth: netWorth,
-            },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          if (updateResponse.status === 200) {
+          if (isNaN(netWorth) || netWorth < 0) {
             bot.sendMessage(
               chatId,
-              `✅ Ваш бюджет успешно обновлен! Теперь вы можете использовать следующие функции:\n\n` +
-                `1️⃣ Проверить баланс\n` +
-                `2️⃣ Добавить транзакцию\n` +
-                `3️⃣ Добавить категорию\n\n` +
-                `Используйте меню ниже для действий.`,
+              '❌ Пожалуйста, введите корректное число для вашего бюджета.'
+            );
+            return;
+          }
+
+          try {
+            const updateResponse = await axios.post(
+              'http://localhost:3000/api/users/update-net-worth',
               {
+                chat_id: chatId,
+                net_worth: netWorth,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (updateResponse.status === 200) {
+              bot.sendMessage(chatId, '✅ Ваш бюджет успешно обновлен!', {
                 reply_markup: {
                   keyboard: [
                     ['💰 Мой баланс', '💳 Добавить транзакцию'],
-                    ['📂 Добавить категорию', '📜 Показать транзакции'],
+                    ['📜 Показать транзакции'],
                   ],
                   resize_keyboard: true,
                 },
-              }
-            );
-          } else {
-            bot.sendMessage(
+              });
+            } else {
+              bot.sendMessage(
+                chatId,
+                '❌ Ошибка при обновлении бюджета. Попробуйте позже.'
+              );
+            }
+          } catch (err) {
+            handleError(
               chatId,
+              err,
               '❌ Ошибка при обновлении бюджета. Попробуйте позже.'
             );
           }
-        } catch (err) {
-          handleError(
-            chatId,
-            err,
-            '❌ Ошибка при обновлении бюджета. Попробуйте позже.'
-          );
-        }
-      });
+        });
+      }
     } else {
       bot.sendMessage(chatId, 'Ошибка регистрации. Попробуйте позже.');
     }

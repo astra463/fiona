@@ -5,38 +5,6 @@ import { authenticateToken } from './middleware/auth.js';
 export default function usersRoutes(db) {
   const router = express.Router();
 
-  // Создать нового пользователя
-  router.post('/', (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'username and password are required' });
-    }
-
-    db.run(
-      'INSERT INTO users (username, password) VALUES (?, ?)',
-      [username, password],
-      function (err) {
-        if (err) {
-          res.status(500).json({ error: err.message });
-          return;
-        }
-        res.json({ id: this.lastID });
-      }
-    );
-  });
-
-  // Получить всех пользователей (для тестов)
-  router.get('/', (req, res) => {
-    db.all('SELECT id, username, created_at FROM users', [], (err, rows) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.json(rows);
-    });
-  });
-
   // Обновить net_worth для пользователя
   router.post('/update-net-worth', (req, res) => {
     const { chat_id, net_worth } = req.body;

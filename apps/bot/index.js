@@ -1,7 +1,6 @@
 import {
   handleMyBalance,
   handleStartCommand,
-  handleAddCategory,
   handleShowTransactions,
   handleAddTransaction,
 } from './commands/index.js';
@@ -28,9 +27,6 @@ bot.on('message', async (msg) => {
       break;
     case '💳 Добавить транзакцию':
       handleAddTransaction(chatId, token);
-      break;
-    case '📂 Добавить категорию':
-      handleAddCategory(chatId, token);
       break;
     case '📜 Показать транзакции':
       handleShowTransactions(chatId, token);
