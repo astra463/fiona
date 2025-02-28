@@ -2,27 +2,22 @@ services:
   bot:
     build:
       context: .
-      dockerfile: Dockerfile.bot
+      dockerfile: apps/server/Dockerfile
     volumes:
       - ./apps/bot:/app
     environment:
       - NODE_ENV=production
     restart: always
-    ports:
-      - "5000:5000"  # Порт для бота, если нужно для API
-    logs:
-      driver: "json-file"
 
   server:
     build:
       context: .
-      dockerfile: Dockerfile.server
+      dockerfile: apps/bot/Dockerfile
     volumes:
       - ./apps/server:/app
     environment:
       - NODE_ENV=production
     restart: always
     ports:
-      - "3000:3000"  # Порт для сервера
-    logs:
-      driver: "json-file"
+      - "3000:3000" 
+
