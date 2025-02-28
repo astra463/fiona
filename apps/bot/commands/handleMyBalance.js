@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { bot } from '../bot.js';
 import handleError from '../utils/handleError.js';
-import logger from '../../../shared/logger.js';
+import logger from '../utils/logger.js';
 
 export async function handleMyBalance(chatId, token) {
   try {

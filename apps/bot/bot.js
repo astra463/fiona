@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
 
-import logger from '../../shared/logger.js';
+import logger from './utils/logger.js';
 
 dotenv.config();
 
