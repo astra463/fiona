@@ -7,13 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      winston:
-        specifier: ^3.17.0
-        version: 3.17.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.17.0
@@ -42,12 +35,21 @@ importers:
       axios:
         specifier: ^1.7.9
         version: 1.7.9
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       node-telegram-bot-api:
         specifier: ^0.66.0
         version: 0.66.0(request@2.88.2)
+      winston:
+        specifier: ^3.17.0
+        version: 3.17.0
 
   apps/server:
     dependencies:
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -57,6 +59,9 @@ importers:
       sqlite3:
         specifier: ^5.1.7
         version: 5.1.7
+      winston:
+        specifier: ^3.17.0
+        version: 3.17.0
 
 packages:
 

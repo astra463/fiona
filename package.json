@@ -26,10 +26,6 @@
     "url": "https://github.com/astra463/fiona/issues"
   },
   "homepage": "https://github.com/astra463/fiona#readme",
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "winston": "^3.17.0"
-  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
