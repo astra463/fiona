@@ -1,11 +1,16 @@
+# Dockerfile для сервера
 FROM node:22.12.0
 
 WORKDIR /app
 
-COPY package*.json ./
+# Копируем package.json и pnpm-lock.yaml для сервера
+COPY apps/server/package.json apps/server/package-lock.json ./
 
-RUN corepack enable && pnpm install --production
+# Устанавливаем зависимости сервера
+RUN npm install -g pnpm && pnpm install
 
-COPY . .
+# Копируем файлы сервера
+COPY apps/server /app
 
-CMD ["node", "index.js"]
+# Запуск сервера
+CMD ["node", "apps/server/index.js"]

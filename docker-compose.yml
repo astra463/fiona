@@ -1,23 +1,28 @@
-version: '3.8'
-
 services:
-  server:
-    build:
-      context: ./apps/server
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000" 
-    environment:
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET}
-    volumes:
-      - ./db/sqlite.db:/data/fiona.db 
-    restart: unless-stopped
-
   bot:
     build:
-      context: ./apps/bot
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.bot
+    volumes:
+      - ./apps/bot:/app
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-    restart: unless-stopped
+      - NODE_ENV=production
+    restart: always
+    ports:
+      - "5000:5000"  # Порт для бота, если нужно для API
+    logs:
+      driver: "json-file"
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    volumes:
+      - ./apps/server:/app
+    environment:
+      - NODE_ENV=production
+    restart: always
+    ports:
+      - "3000:3000"  # Порт для сервера
+    logs:
+      driver: "json-file"

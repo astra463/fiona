@@ -1,11 +1,16 @@
+# Dockerfile для бота
 FROM node:22.12.0
 
 WORKDIR /app
 
-COPY package*.json ./
+# Копируем package.json и pnpm-lock.yaml
+COPY apps/bot/package.json apps/bot/pnpm-lock.yaml ./
 
-RUN corepack enable && pnpm install --production
+# Устанавливаем зависимости бота
+RUN npm install -g pnpm && pnpm install
 
-COPY . .
+# Копируем файлы бота
+COPY apps/bot /app
 
-CMD ["node", "index.js"]
+# Запуск бота
+CMD ["node", "apps/bot/index.js"]
