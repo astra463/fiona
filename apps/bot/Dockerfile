@@ -1,17 +1,15 @@
-FROM node:22.12.0
+FROM node:22.14.0
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json ./
 
-RUN npm install -g pnpm && pnpm install
+RUN corepack enable pnpm
 
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  python3 \
-  libsqlite3-dev \
-  && rm -rf /var/lib/apt/lists/*
+RUN pnpm -v
+
+RUN pnpm install
 
 COPY . .
 
-CMD ["node", "index.js"]
+CMD ["pnpm", "start"]
