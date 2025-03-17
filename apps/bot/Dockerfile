@@ -6,8 +6,6 @@ COPY package.json ./
 
 RUN corepack enable pnpm
 
-RUN pnpm -v
-
 RUN pnpm install
 
 COPY . .
