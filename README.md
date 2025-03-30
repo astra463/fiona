@@ -1,4 +1,4 @@
-# Fiona - Финансовый трекер
+# Mr.black - Финансовый трекер
 
 Приложение для отслеживания финансов с Telegram-ботом.
 
@@ -48,10 +48,10 @@ docker-compose logs -f
 pnpm install
 
 # Запуск сервера
-pnpm --filter @fiona/server start
+pnpm --filter @mr.black/server start
 
 # Запуск бота (в отдельном терминале)
-pnpm --filter @fiona/bot start
+pnpm --filter @mr.black/bot start
 ```
 
 ## Система логирования
@@ -95,7 +95,7 @@ pnpm --filter @fiona/bot start
 
 ## Резервное копирование
 
-База данных SQLite хранится в томе Docker и доступна по пути `/db/fiona.db`. Рекомендуется настроить регулярное резервное копирование этого файла.
+База данных SQLite хранится в томе Docker и доступна по пути `/db/mr.black.db`. Рекомендуется настроить регулярное резервное копирование этого файла.
 
 ## Устранение неполадок
 

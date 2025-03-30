@@ -20,10 +20,10 @@ dotenv.config();
 
 const PORT = process.env.PORT;
 
-// Путь к базе данных - в Docker контейнере это будет /app/db/fiona.db
+// Путь к базе данных - в Docker контейнере это будет /app/db/mr.black.db
 const dbPath = process.env.NODE_ENV === 'production' 
-  ? '/app/db/fiona.db'  // Путь в Docker контейнере
-  : path.resolve(__dirname, '../../db/fiona.db'); // Путь для локальной разработки
+  ? '/app/db/mrBlack.db'  // Путь в Docker контейнере
+  : path.resolve(__dirname, '../../db/mrBlack.db'); // Путь для локальной разработки
 
 // Подключение к базе данных SQLite
 const db = new sqlite3.Database(dbPath, (err) => {

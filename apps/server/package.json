@@ -1,5 +1,5 @@
 {
-  "name": "@fiona/server",
+  "name": "@mr.black/server",
   "version": "1.0.0",
   "description": "Backend for Finance Tracker",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/astra463/fiona.git"
+    "url": "git+https://github.com/astra463/mr.black.git"
   },
   "author": "Sergei Shilov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/astra463/fiona/issues"
+    "url": "https://github.com/astra463/mr.black/issues"
   },
-  "homepage": "https://github.com/astra463/fiona#readme",
+  "homepage": "https://github.com/astra463/mr.black#readme",
   "dependencies": {
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
