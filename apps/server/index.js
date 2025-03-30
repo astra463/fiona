@@ -19,7 +19,10 @@ dotenv.config();
 
 const PORT = process.env.PORT;
 
-const dbPath = path.resolve(__dirname, '../../db/fiona.db');
+// Путь к базе данных - в Docker контейнере это будет /app/db/fiona.db
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/app/db/fiona.db'  // Путь в Docker контейнере
+  : path.resolve(__dirname, '../../db/fiona.db'); // Путь для локальной разработки
 
 // Подключение к базе данных SQLite
 const db = new sqlite3.Database(dbPath, (err) => {
@@ -32,7 +35,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 // Чтение и выполнение SQL-скрипта для инициализации таблиц
-const initSqlPath = path.resolve(__dirname, '../../db/init.sql');
+const initSqlPath = process.env.NODE_ENV === 'production'
+  ? '/app/db/init.sql'  // Путь в Docker контейнере
+  : path.resolve(__dirname, '../../db/init.sql'); // Путь для локальной разработки
 
 (async () => {
   try {

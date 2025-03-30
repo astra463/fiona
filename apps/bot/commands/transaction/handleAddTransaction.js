@@ -2,6 +2,7 @@ import axios from 'axios';
 import { bot } from '../../bot.js';
 import handleError from '../../utils/handleError.js';
 import { default_categories } from '../constants/default_categories.js';
+import { SERVER_URL } from '../../config.js';
 
 export async function handleAddTransaction(chatId, token) {
   bot.sendMessage(chatId, 'Это доход или расход?', {
@@ -36,7 +37,7 @@ export async function handleAddTransaction(chatId, token) {
 
         try {
           await axios.post(
-            'http://localhost:3000/api/transactions',
+            `${SERVER_URL}/api/transactions`,
             {
               amount,
               category_id: null, // Для доходов категории нет
@@ -139,7 +140,7 @@ export async function handleAddTransaction(chatId, token) {
 
           try {
             await axios.post(
-              'http://localhost:3000/api/transactions',
+              `${SERVER_URL}/api/transactions`,
               {
                 amount: -amount,
                 category_id: selectedCategory.id,

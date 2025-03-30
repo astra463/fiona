@@ -3,6 +3,7 @@ import { bot } from '../../bot.js';
 import handleError from '../../utils/handleError.js';
 import { default_categories } from '../constants/default_categories.js';
 import { findCategoryById } from './handleAddTransaction.js';
+import { SERVER_URL } from '../../config.js';
 export async function handleShowTransactions(chatId, token) {
   bot.sendMessage(chatId, 'Выберите период для просмотра транзакций:', {
     reply_markup: {
@@ -20,7 +21,7 @@ export async function handleShowTransactions(chatId, token) {
 
     try {
       const response = await axios.get(
-        `http://localhost:3000/api/transactions?period=${period}`,
+        `${SERVER_URL}/api/transactions?period=${period}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

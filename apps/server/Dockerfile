@@ -6,9 +6,13 @@ RUN apk add --no-cache python3 make g++ gcc
 
 COPY package.json ./
 
-RUN corepack enable pnpm
+# Install a specific version of pnpm that's compatible with Node.js 14
+RUN npm install -g pnpm@7.30.5
 
-RUN pnpm install --build-from-source
+# Установка sqlite3 с принудительной компиляцией для текущей архитектуры
+RUN pnpm add sqlite3 --force
+# Установка остальных зависимостей
+RUN pnpm install
 
 COPY . .
 

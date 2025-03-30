@@ -3,6 +3,7 @@ import logger from '../utils/logger.js';
 import { bot } from '../bot.js';
 import { userTokens } from '../index.js';
 import handleError from '../utils/handleError.js';
+import { SERVER_URL } from '../config.js';
 
 export async function handleStartCommand(msg) {
   const chatId = msg.chat.id;
@@ -12,7 +13,7 @@ export async function handleStartCommand(msg) {
 
   try {
     const response = await axios.post(
-      'http://localhost:3000/api/auth/telegram',
+      `${SERVER_URL}/api/auth/telegram`,
       {
         chat_id: chatId,
         name,
@@ -54,8 +55,9 @@ export async function handleStartCommand(msg) {
           }
 
           try {
+            // Добавляем токен авторизации в заголовки запроса
             const updateResponse = await axios.post(
-              'http://localhost:3000/api/users/update-net-worth',
+              `${SERVER_URL}/api/users/update-net-worth`,
               {
                 chat_id: chatId,
                 net_worth: netWorth,

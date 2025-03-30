@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY package.json ./
 
-RUN corepack enable pnpm
+# Install a specific version of pnpm that's compatible with Node.js 14
+RUN npm install -g pnpm@7.30.5
 
 RUN pnpm install
 

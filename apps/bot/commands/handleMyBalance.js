@@ -2,10 +2,11 @@ import axios from 'axios';
 import { bot } from '../bot.js';
 import handleError from '../utils/handleError.js';
 import logger from '../utils/logger.js';
+import { SERVER_URL } from '../config.js';
 
 export async function handleMyBalance(chatId, token) {
   try {
-    const response = await axios.get('http://localhost:3000/api/users/me', {
+    const response = await axios.get(`${SERVER_URL}/api/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
