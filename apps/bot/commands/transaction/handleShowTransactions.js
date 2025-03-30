@@ -5,6 +5,7 @@ import logger from '../../utils/logger.js';
 import { default_categories } from '../constants/default_categories.js';
 import { findCategoryById } from './handleAddTransaction.js';
 import { SERVER_URL } from '../../config.js';
+
 export async function handleShowTransactions(chatId, token) {
   bot.sendMessage(chatId, 'Выберите период для просмотра транзакций:', {
     reply_markup: {
@@ -30,11 +31,13 @@ export async function handleShowTransactions(chatId, token) {
 
       if (response.status === 200) {
         const formatter = new Intl.DateTimeFormat('ru-RU', {
+          timeZone: 'Europe/Moscow',
           day: 'numeric',
           month: 'long',
           year: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
+          hour12: false,
         });
 
         const transactions = response.data;
@@ -45,21 +48,32 @@ export async function handleShowTransactions(chatId, token) {
             .map((t) => {
               // Определяем тип транзакции (доход/расход) по сумме
               const isIncome = t.amount > 0;
-              
+
               // Для доходов не показываем категорию, для расходов проверяем наличие категории
-              const categoryText = isIncome 
-                ? 'Доход' 
-                : (t.category_id && findCategoryById(default_categories, t.category_id) 
-                    ? findCategoryById(default_categories, t.category_id).name 
-                    : 'Без категории');
-              
-              return `
-💰 Сумма: ${t.amount}, 
-${isIncome ? 'Тип' : 'Категория'}: ${categoryText}, 
+              const categoryText = isIncome
+                ? 'Доход'
+                : t.category_id &&
+                  findCategoryById(default_categories, t.category_id)
+                ? findCategoryById(default_categories, t.category_id).name
+                : 'Без категории';
+
+              // Форматирование вывода в зависимости от дохода или расхода
+              return isIncome
+                ? `💰 Пополнение: ${t.amount.toLocaleString('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB',
+                  })}
+Дата: ${formatter.format(new Date(t.date))}
+Описание: ${t.description || 'нет'}`
+                : `💸 Расход: ${t.amount.toLocaleString('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB',
+                  })}
+Дата: ${formatter.format(new Date(t.date))}
 Описание: ${t.description || 'нет'}, 
-${formatter.format(new Date(t.date))}`;
+Категория: ${categoryText}`;
             })
-            .join('\n');
+            .join('\n\n');
           bot.sendMessage(chatId, `Ваши транзакции:\n\n${transactionList}`);
         }
       } else {
@@ -70,7 +84,7 @@ ${formatter.format(new Date(t.date))}`;
         error: error.message,
         stack: error.stack,
         chatId,
-        period
+        period,
       });
       handleError(chatId, error, 'Ошибка при получении транзакций.');
     }
