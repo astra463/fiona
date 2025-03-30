@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import transactionsRoutes from './routes/transactions.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
+import logger from './utils/logger.js';
 
 // Получаем __dirname в ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -27,10 +28,10 @@ const dbPath = process.env.NODE_ENV === 'production'
 // Подключение к базе данных SQLite
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Ошибка подключения к БД:', err.message);
+    logger.error('Ошибка подключения к БД:', { error: err.message });
     process.exit(1); // Завершаем процесс, если не удалось подключиться
   } else {
-    console.log('Подключение к SQLite установлено.');
+    logger.info('Подключение к SQLite установлено.');
   }
 });
 
@@ -44,13 +45,13 @@ const initSqlPath = process.env.NODE_ENV === 'production'
     const initSql = await fs.readFile(initSqlPath, 'utf-8');
     db.exec(initSql, (err) => {
       if (err) {
-        console.error('Ошибка выполнения SQL-скрипта:', err.message);
+        logger.error('Ошибка выполнения SQL-скрипта:', { error: err.message });
       } else {
-        console.log('Таблицы успешно созданы.');
+        logger.info('Таблицы успешно созданы.');
       }
     });
   } catch (err) {
-    console.error('Ошибка чтения файла init.sql:', err.message);
+    logger.error('Ошибка чтения файла init.sql:', { error: err.message, path: initSqlPath });
     process.exit(1);
   }
 })();
@@ -62,6 +63,44 @@ app.use('/api/transactions', transactionsRoutes(db));
 app.use('/api/auth', authRoutes(db));
 app.use('/api/users', usersRoutes(db));
 
+// Middleware для логирования запросов
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Логируем запрос
+  logger.info(`Входящий запрос: ${req.method} ${req.originalUrl}`, {
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+    headers: req.headers,
+  });
+  
+  // После завершения запроса логируем ответ
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info(`Ответ отправлен: ${req.method} ${req.originalUrl}`, {
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+    });
+  });
+  
+  next();
+});
+
+// Middleware для обработки ошибок
+app.use((err, req, res, next) => {
+  logger.error('Ошибка сервера:', { 
+    error: err.message, 
+    stack: err.stack,
+    method: req.method,
+    url: req.originalUrl 
+  });
+  
+  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
+
 app.listen(PORT, () => {
-  console.log(`Сервер запущен на http://localhost:${PORT}`);
+  logger.info(`Сервер запущен на http://localhost:${PORT}`);
 });

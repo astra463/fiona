@@ -21,17 +21,17 @@ const logFormat = winston.format.combine(
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
-  defaultMeta: { service: 'bot' },
+  defaultMeta: { service: 'server' },
   transports: [
     // Запись логов в файлы
     new winston.transports.File({ 
-      filename: path.join(logDir, 'bot-error.log'), 
+      filename: path.join(logDir, 'server-error.log'), 
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),
     new winston.transports.File({ 
-      filename: path.join(logDir, 'bot-combined.log'),
+      filename: path.join(logDir, 'server-combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5,
     }),

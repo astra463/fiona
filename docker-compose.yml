@@ -9,8 +9,11 @@ services:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET}
       - PORT=${PORT}
+      - LOG_LEVEL=info
+      - TELEGRAM_LOG_CHAT_ID=${TELEGRAM_LOG_CHAT_ID}
     volumes:
       - ./db:/app/db  # Относительный путь для лучшей переносимости
+      - ./logs:/app/logs  # Директория для логов
     restart: unless-stopped
 
   bot:
@@ -18,8 +21,16 @@ services:
       context: apps/bot
       dockerfile: Dockerfile  
     environment:
+      - NODE_ENV=production
       - BOT_TOKEN=${BOT_TOKEN}
       - SERVER_URL=http://server:3000  # Добавлено для связи с сервером
+      - LOG_LEVEL=info
+      - TELEGRAM_LOG_CHAT_ID=${TELEGRAM_LOG_CHAT_ID}
+    volumes:
+      - ./logs:/app/logs  # Директория для логов
     restart: unless-stopped
     depends_on:
       - server  # Гарантирует, что сервер запустится первым
+
+volumes:
+  logs:  # Определяем именованный том для логов
