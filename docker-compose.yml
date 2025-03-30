@@ -10,7 +10,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - PORT=${PORT}
     volumes:
-      - /home/care1aker/apps/fiona/db/fiona.db
+      - ./db:/app/db  # Относительный путь для лучшей переносимости
     restart: unless-stopped
 
   bot:
@@ -19,4 +19,7 @@ services:
       dockerfile: Dockerfile  
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
+      - SERVER_URL=http://server:3000  # Добавлено для связи с сервером
     restart: unless-stopped
+    depends_on:
+      - server  # Гарантирует, что сервер запустится первым
