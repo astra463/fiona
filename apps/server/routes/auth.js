@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 // Загружаем переменные окружения
 dotenv.config();
@@ -8,7 +9,7 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
-  console.error('JWT_SECRET is not defined!');
+  logger.error('JWT_SECRET is not defined!');
   process.exit(1);
 }
 
@@ -20,7 +21,7 @@ export default function authRoutes(db) {
     const { chat_id, name } = req.body;
 
     if (!chat_id) {
-      console.error('chat_id is missing!');
+      logger.error('chat_id is missing in auth request!');
       return res.status(400).json({ error: 'chat_id is required' });
     }
 
@@ -29,32 +30,54 @@ export default function authRoutes(db) {
       [chat_id],
       (err, user) => {
         if (err) {
-          console.error('Database error:', err.message);
+          logger.error('Database error in auth:', { error: err.message });
           return res.status(500).json({ error: err.message });
         }
 
         if (user) {
-          console.log('User exists, generating token...');
+          logger.info('Existing user authenticated:', { 
+            userId: user.id, 
+            chatId: chat_id,
+            name: user.name
+          });
           const token = jwt.sign({ user_id: user.id }, JWT_SECRET, {
             expiresIn: '1h',
           });
-          return res.json({ message: 'Welcome back!', token });
+          return res.json({ 
+            message: 'Welcome back!', 
+            token,
+            net_worth: user.net_worth 
+          });
         } else {
-          console.log('User not found, creating new user...');
+          logger.info('Creating new user:', { chatId: chat_id, name });
 
           db.run(
             'INSERT INTO users (telegram_chat_id, name) VALUES (?, ?)',
             [chat_id, name],
             function (err) {
               if (err) {
-                console.error('Error inserting new user:', err.message);
+                logger.error('Error inserting new user:', { 
+                  error: err.message,
+                  chatId: chat_id,
+                  name
+                });
                 return res.status(500).json({ error: err.message });
               }
+              
+              logger.info('New user created successfully:', { 
+                userId: this.lastID,
+                chatId: chat_id,
+                name
+              });
 
               const token = jwt.sign({ user_id: this.lastID }, JWT_SECRET, {
                 expiresIn: '1h',
               });
-              return res.json({ message: 'Registration successful!', token });
+              return res.json({ 
+                message: 'Registration successful!', 
+                token,
+                net_worth: 0 // Новый пользователь, net_worth = 0 по умолчанию в БД
+              });
             }
           );
         }

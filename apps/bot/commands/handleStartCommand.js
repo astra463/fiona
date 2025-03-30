@@ -26,13 +26,17 @@ export async function handleStartCommand(msg) {
       const { token, net_worth } = response.data;
       userTokens[chatId] = token;
       
+      // Проверяем, новый ли это пользователь (баланс = 0)
+      const isNewUser = net_worth === 0;
+      
       logger.info(`Пользователь успешно авторизован`, { 
         chatId, 
         name,
-        isNewUser: net_worth === null
+        isNewUser,
+        net_worth
       });
 
-      if (net_worth !== null) {
+      if (!isNewUser) {
         bot.sendMessage(chatId, `👋 Добро пожаловать, ${name}!`, {
           reply_markup: {
             keyboard: [
