@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { bot } from '../../bot.js';
 import handleError from '../../utils/handleError.js';
+import logger from '../../utils/logger.js';
 import { default_categories } from '../constants/default_categories.js';
 import { findCategoryById } from './handleAddTransaction.js';
 import { SERVER_URL } from '../../config.js';
@@ -42,9 +43,19 @@ export async function handleShowTransactions(chatId, token) {
         } else {
           const transactionList = transactions
             .map((t) => {
+              // Определяем тип транзакции (доход/расход) по сумме
+              const isIncome = t.amount > 0;
+              
+              // Для доходов не показываем категорию, для расходов проверяем наличие категории
+              const categoryText = isIncome 
+                ? 'Доход' 
+                : (t.category_id && findCategoryById(default_categories, t.category_id) 
+                    ? findCategoryById(default_categories, t.category_id).name 
+                    : 'Без категории');
+              
               return `
 💰 Сумма: ${t.amount}, 
-Категория: ${findCategoryById(default_categories, t.category_id).name}, 
+${isIncome ? 'Тип' : 'Категория'}: ${categoryText}, 
 Описание: ${t.description || 'нет'}, 
 ${formatter.format(new Date(t.date))}`;
             })
@@ -55,7 +66,12 @@ ${formatter.format(new Date(t.date))}`;
         bot.sendMessage(chatId, 'Ошибка при получении транзакций.');
       }
     } catch (error) {
-      console.log(error);
+      logger.error('Ошибка при получении транзакций:', {
+        error: error.message,
+        stack: error.stack,
+        chatId,
+        period
+      });
       handleError(chatId, error, 'Ошибка при получении транзакций.');
     }
   });
