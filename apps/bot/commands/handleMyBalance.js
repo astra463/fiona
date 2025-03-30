@@ -12,7 +12,13 @@ export async function handleMyBalance(chatId, token) {
 
     if (response.status === 200) {
       const { net_worth } = response.data;
-      bot.sendMessage(chatId, `💰 Ваш текущий баланс: ${net_worth} 💵`);
+      bot.sendMessage(
+        chatId,
+        `💰 Ваш текущий баланс: ${net_worth.toLocaleString('ru-RU', {
+          style: 'currency',
+          currency: 'RUB',
+        })} 💵`
+      );
     } else {
       bot.sendMessage(chatId, 'Ошибка при получении баланса.');
     }
