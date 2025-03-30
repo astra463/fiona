@@ -12,6 +12,8 @@ export async function handleStartCommand(msg) {
   logger.info(`Получена команда /start от chatId: ${chatId}, name: ${name}`);
 
   try {
+    logger.info(`Отправка запроса авторизации на сервер`, { chatId, name });
+    
     const response = await axios.post(
       `${SERVER_URL}/api/auth/telegram`,
       {
@@ -23,6 +25,12 @@ export async function handleStartCommand(msg) {
     if (response.status === 200) {
       const { token, net_worth } = response.data;
       userTokens[chatId] = token;
+      
+      logger.info(`Пользователь успешно авторизован`, { 
+        chatId, 
+        name,
+        isNewUser: net_worth === null
+      });
 
       if (net_worth !== null) {
         bot.sendMessage(chatId, `👋 Добро пожаловать, ${name}!`, {
