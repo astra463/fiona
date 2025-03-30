@@ -6,9 +6,8 @@ COPY package.json ./
 
 RUN corepack enable pnpm
 
-RUN pnpm install --filter '!sqlite3'
-
-COPY artifacts/sqlite3 /node_modules/.pnpm/sqlite3@5.1.7/node_modules/sqlite3
+# Install native node_modules in Dockerfile so it uses pnpm's supportedArchitectures feature in package.json
+RUN pnpm install sqlite3@5.1.7
 
 COPY . .
 
