@@ -41,7 +41,7 @@ export default function authRoutes(db) {
             name: user.name
           });
           const token = jwt.sign({ user_id: user.id }, JWT_SECRET, {
-            expiresIn: '1h',
+            expiresIn: '24h', // Увеличиваем срок действия токена до 24 часов
           });
           return res.json({ 
             message: 'Welcome back!', 
@@ -71,7 +71,7 @@ export default function authRoutes(db) {
               });
 
               const token = jwt.sign({ user_id: this.lastID }, JWT_SECRET, {
-                expiresIn: '1h',
+                expiresIn: '24h', // Увеличиваем срок действия токена до 24 часов
               });
               return res.json({ 
                 message: 'Registration successful!', 
