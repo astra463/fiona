@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import transactionsRoutes from './routes/transactions.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
+import categoriesRoutes from './routes/categories.js';
 import logger from './utils/logger.js';
 
 // Получаем __dirname в ESM
@@ -62,6 +63,7 @@ app.use(express.json());
 app.use('/api/transactions', transactionsRoutes(db));
 app.use('/api/auth', authRoutes(db));
 app.use('/api/users', usersRoutes(db));
+app.use('/api/categories', categoriesRoutes(db));
 
 // Middleware для логирования запросов
 app.use((req, res, next) => {

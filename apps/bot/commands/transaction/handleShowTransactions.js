@@ -51,14 +51,36 @@ export async function handleShowTransactions(chatId) {
       // Получаем актуальный токен из менеджера сессий
       const currentToken = sessionManager.getToken(chatId);
       
-      const response = await axios.get(
+      // Получаем транзакции
+      const transactionsResponse = await axios.get(
         `${SERVER_URL}/api/transactions?period=${period}`,
         {
           headers: { Authorization: `Bearer ${currentToken}` },
         }
       );
+      
+      // Получаем пользовательские категории
+      let customCategories = [];
+      try {
+        const categoriesResponse = await axios.get(
+          `${SERVER_URL}/api/categories/custom`,
+          {
+            headers: { Authorization: `Bearer ${currentToken}` },
+          }
+        );
+        
+        if (categoriesResponse.status === 200) {
+          customCategories = categoriesResponse.data;
+        }
+      } catch (error) {
+        logger.error('Ошибка при получении пользовательских категорий:', {
+          error: error.message,
+          chatId
+        });
+        // Продолжаем работу даже если не удалось загрузить пользовательские категории
+      }
 
-      if (response.status === 200) {
+      if (transactionsResponse.status === 200) {
         const formatter = new Intl.DateTimeFormat('ru-RU', {
           timeZone: 'Europe/Moscow',
           day: 'numeric',
@@ -69,7 +91,7 @@ export async function handleShowTransactions(chatId) {
           hour12: false,
         });
 
-        const transactions = response.data;
+        const transactions = transactionsResponse.data;
         if (transactions.length === 0) {
           bot.sendMessage(chatId, 'За выбранный период транзакций нет.');
         } else {
@@ -78,13 +100,24 @@ export async function handleShowTransactions(chatId) {
               // Определяем тип транзакции (доход/расход) по сумме
               const isIncome = t.amount > 0;
 
-              // Для доходов не показываем категорию, для расходов проверяем наличие категории
-              const categoryText = isIncome
-                ? 'Доход'
-                : t.category_id &&
-                  findCategoryById(default_categories, t.category_id)
-                ? findCategoryById(default_categories, t.category_id).name
-                : 'Без категории';
+              // Определяем категорию транзакции
+              let categoryText = 'Без категории';
+              
+              if (isIncome) {
+                categoryText = 'Доход';
+              } else if (t.category_id) {
+                // Сначала проверяем, есть ли категория в пользовательских категориях
+                const customCategory = customCategories.find(cat => cat.id === t.category_id);
+                if (customCategory) {
+                  categoryText = `🔹 ${customCategory.name}`;
+                } else {
+                  // Если не нашли в пользовательских, ищем в стандартных категориях
+                  const category = findCategoryById(default_categories, t.category_id);
+                  if (category) {
+                    categoryText = category.name;
+                  }
+                }
+              }
 
               // Форматирование вывода в зависимости от дохода или расхода
               return isIncome

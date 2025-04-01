@@ -19,3 +19,14 @@ CREATE TABLE IF NOT EXISTS transactions (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
+
+-- Создаем таблицу пользовательских категорий
+CREATE TABLE IF NOT EXISTS custom_categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  user_id INTEGER NOT NULL,
+  parent_id INTEGER DEFAULT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (parent_id) REFERENCES custom_categories (id)
+);

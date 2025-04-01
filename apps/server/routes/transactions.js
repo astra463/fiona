@@ -50,9 +50,20 @@ export default function transactionsRoutes(db) {
 
   // Создать новую транзакцию
   router.post('/', authenticateToken, (req, res) => {
-    console.log(req.body)
+    console.log(req.body);
     const { amount, description, date, category_id } = req.body;
     const user_id = req.user.user_id;
+    
+    let finalCategoryId = null;
+    let isCustomCategory = false;
+    
+    // Проверяем, является ли категория пользовательской
+    if (category_id && typeof category_id === 'string' && category_id.startsWith('custom_')) {
+      finalCategoryId = parseInt(category_id.split('_')[1], 10);
+      isCustomCategory = true;
+    } else if (category_id) {
+      finalCategoryId = category_id;
+    }
 
     if (!amount) {
       return res.status(400).json({ error: 'amount is required' });
@@ -61,50 +72,77 @@ export default function transactionsRoutes(db) {
     db.serialize(() => {
       db.run('BEGIN TRANSACTION');
 
-      db.run(
-        'INSERT INTO transactions (amount, description, date, user_id, category_id) VALUES (?, ?, ?, ?, ?)',
-        [
-          amount,
-          description || null,
-          date || new Date().toISOString(),
-          user_id,
-          category_id
-        ],
-        function (err) {
-          if (err) {
-            db.run('ROLLBACK');
-            res.status(500).json({ error: err.message });
-            return;
+      // Если это пользовательская категория, проверяем, что она принадлежит пользователю
+      if (isCustomCategory && finalCategoryId) {
+        db.get(
+          'SELECT id FROM custom_categories WHERE id = ? AND user_id = ?',
+          [finalCategoryId, user_id],
+          (err, row) => {
+            if (err) {
+              db.run('ROLLBACK');
+              return res.status(500).json({ error: err.message });
+            }
+            
+            if (!row) {
+              db.run('ROLLBACK');
+              return res.status(403).json({ error: 'Категория не найдена или не принадлежит пользователю' });
+            }
+            
+            // Категория принадлежит пользователю, продолжаем добавление транзакции
+            insertTransaction();
           }
+        );
+      } else {
+        // Если это стандартная категория или категория не указана, просто добавляем транзакцию
+        insertTransaction();
+      }
+      
+      function insertTransaction() {
+        db.run(
+          'INSERT INTO transactions (amount, description, date, user_id, category_id) VALUES (?, ?, ?, ?, ?)',
+          [
+            amount,
+            description || null,
+            date || new Date().toISOString(),
+            user_id,
+            finalCategoryId
+          ],
+          function (err) {
+            if (err) {
+              db.run('ROLLBACK');
+              res.status(500).json({ error: err.message });
+              return;
+            }
 
-          db.run(
-            'UPDATE users SET net_worth = net_worth + ? WHERE id = ?',
-            [amount, user_id],
-            function (updateErr) {
-              if (updateErr) {
-                db.run('ROLLBACK');
-                res.status(500).json({ error: updateErr.message });
-                return;
-              }
-
-              db.run('COMMIT', (commitErr) => {
-                if (commitErr) {
-                  res
-                    .status(500)
-                    .json({ error: 'Failed to commit transaction' });
+            db.run(
+              'UPDATE users SET net_worth = net_worth + ? WHERE id = ?',
+              [amount, user_id],
+              function (updateErr) {
+                if (updateErr) {
+                  db.run('ROLLBACK');
+                  res.status(500).json({ error: updateErr.message });
                   return;
                 }
 
-                res.json({
-                  id: this.lastID,
-                  message:
-                    'Transaction added and net worth updated successfully!',
+                db.run('COMMIT', (commitErr) => {
+                  if (commitErr) {
+                    res
+                      .status(500)
+                      .json({ error: 'Failed to commit transaction' });
+                    return;
+                  }
+
+                  res.json({
+                    id: this.lastID,
+                    message:
+                      'Transaction added and net worth updated successfully!',
+                  });
                 });
-              });
-            }
-          );
-        }
-      );
+              }
+            );
+          }
+        );
+      }
     });
   });
 
