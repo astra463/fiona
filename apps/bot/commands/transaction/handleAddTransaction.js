@@ -74,7 +74,7 @@ export async function handleAddTransaction(chatId, token) {
       
       bot.sendMessage(
         chatId,
-        'Введите сумму и источник дохода в формате: сумма, источник.'
+        'Введите сумму и источник дохода в формате: сумма описание.\nНапример: 1250,50 Зарплата'
       );
       
       // Создаем обработчик для ввода дохода
@@ -84,9 +84,24 @@ export async function handleAddTransaction(chatId, token) {
           return;
         }
         
-        const [amountText, ...descriptionParts] = msg.text.split(',');
-        const amount = parseFloat(amountText.trim());
-        const description = descriptionParts.join(',').trim();
+        // Извлекаем сумму из начала строки
+        const text = msg.text.trim();
+        // Находим первое число в строке (может содержать точку или запятую)
+        const amountMatch = text.match(/^(\d+[.,]?\d*)/);
+        
+        if (!amountMatch) {
+          bot.sendMessage(chatId, 'Введите корректное значение суммы.');
+          // Очищаем сессию пользователя
+          sessionManager.clearSession(chatId, bot);
+          return;
+        }
+        
+        // Получаем сумму и заменяем запятую на точку для корректного парсинга
+        const amountText = amountMatch[0];
+        const amount = parseFloat(amountText.replace(',', '.'));
+        
+        // Получаем описание (всё, что идёт после суммы)
+        const description = text.substring(amountMatch[0].length).trim();
 
         if (isNaN(amount) || amount <= 0) {
           bot.sendMessage(chatId, 'Введите корректное значение суммы.');
@@ -95,11 +110,86 @@ export async function handleAddTransaction(chatId, token) {
           return;
         }
 
+        // Обновляем состояние сессии для ввода даты
+        sessionManager.setState(chatId, 'entering_income_date', {
+          amount,
+          description
+        });
+        
+        bot.sendMessage(
+          chatId,
+          'Введите дату транзакции в формате ДД.ММ.ГГГГ или нажмите "Сегодня" для использования текущей даты:',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '📅 Сегодня', callback_data: 'date_today' },
+                ],
+              ],
+            },
+          }
+        );
+        
+        // Создаем обработчик для выбора даты
+        const dateSelectionHandler = async (callbackQuery) => {
+          // Проверяем, что это сообщение от нужного пользователя
+          if (callbackQuery.message.chat.id !== chatId) {
+            return;
+          }
+          
+          if (callbackQuery.data === 'date_today') {
+            // Используем текущую дату
+            const sessionData = sessionManager.getData(chatId);
+            await addIncomeTransaction(sessionData.amount, sessionData.description, new Date());
+          }
+        };
+        
+        // Регистрируем обработчик для выбора даты
+        sessionManager.setCallbackHandler(chatId, dateSelectionHandler, bot);
+        
+        // Создаем обработчик для ввода даты вручную
+        const dateMessageHandler = async (msg) => {
+          // Проверяем, что это сообщение от нужного пользователя
+          if (msg.chat.id !== chatId) {
+            return;
+          }
+          
+          const dateText = msg.text.trim();
+          const dateParts = dateText.split('.');
+          
+          if (dateParts.length !== 3) {
+            bot.sendMessage(chatId, 'Пожалуйста, введите дату в формате ДД.ММ.ГГГГ');
+            return;
+          }
+          
+          const day = parseInt(dateParts[0], 10);
+          const month = parseInt(dateParts[1], 10) - 1; // Месяцы в JavaScript начинаются с 0
+          const year = parseInt(dateParts[2], 10);
+          
+          const date = new Date(year, month, day);
+          
+          // Проверяем корректность даты
+          if (isNaN(date.getTime())) {
+            bot.sendMessage(chatId, 'Пожалуйста, введите корректную дату в формате ДД.ММ.ГГГГ');
+            return;
+          }
+          
+          const sessionData = sessionManager.getData(chatId);
+          await addIncomeTransaction(sessionData.amount, sessionData.description, date);
+        };
+        
+        // Регистрируем обработчик для ввода даты
+        sessionManager.setMessageHandler(chatId, dateMessageHandler, bot);
+      };
+      
+      // Функция для добавления дохода с указанной датой
+      const addIncomeTransaction = async (amount, description, date) => {
         try {
           logger.info(`Добавление дохода`, { 
             chatId, 
             amount,
-            description
+            description,
+            date
           });
           
           // Получаем актуальный токен из менеджера сессий
@@ -111,6 +201,7 @@ export async function handleAddTransaction(chatId, token) {
               amount,
               category_id: null, // Для доходов категории нет
               description: description || 'Источник не указан',
+              date: date.toISOString()
             },
             { headers: { Authorization: `Bearer ${currentToken}` } }
           );
@@ -118,11 +209,18 @@ export async function handleAddTransaction(chatId, token) {
           // Получаем обновленный баланс
           const newBalance = await getUserBalance(currentToken);
 
+          // Форматируем дату для отображения
+          const formatter = new Intl.DateTimeFormat('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          });
+          
           bot.sendMessage(
             chatId,
             `✅ Доход успешно добавлен!\n\n💰 Сумма: ${formatAmount(amount)}\n📝 Источник: ${
               description || 'не указан'
-            }${
+            }\n📅 Дата: ${formatter.format(date)}${
               newBalance !== null ? `\n\n💼 Новый баланс: ${formatAmount(newBalance)}` : ''
             }`
           );
@@ -438,7 +536,7 @@ export async function handleAddTransaction(chatId, token) {
         
         bot.sendMessage(
           chatId,
-          'Введите сумму и описание (необязательно) в формате: сумма, описание.'
+          'Введите сумму и описание (необязательно) в формате: сумма описание.\nНапример: 1250,50 Покупка продуктов'
         );
 
         // Создаем обработчик для ввода расхода
@@ -448,9 +546,24 @@ export async function handleAddTransaction(chatId, token) {
             return;
           }
           
-          const [amountText, ...descriptionParts] = msg.text.split(',');
-          const amount = parseFloat(amountText.trim());
-          const description = descriptionParts.join(',').trim();
+          // Извлекаем сумму из начала строки
+          const text = msg.text.trim();
+          // Находим первое число в строке (может содержать точку или запятую)
+          const amountMatch = text.match(/^(\d+[.,]?\d*)/);
+          
+          if (!amountMatch) {
+            bot.sendMessage(chatId, 'Введите корректное значение суммы.');
+            // Очищаем сессию пользователя
+            sessionManager.clearSession(chatId, bot);
+            return;
+          }
+          
+          // Получаем сумму и заменяем запятую на точку для корректного парсинга
+          const amountText = amountMatch[0];
+          const amount = parseFloat(amountText.replace(',', '.'));
+          
+          // Получаем описание (всё, что идёт после суммы)
+          const description = text.substring(amountMatch[0].length).trim();
 
           if (isNaN(amount) || amount <= 0) {
             bot.sendMessage(chatId, 'Введите корректное значение суммы.');
@@ -459,15 +572,88 @@ export async function handleAddTransaction(chatId, token) {
             return;
           }
 
-          try {
-            // Получаем данные из сессии
-            const sessionData = sessionManager.getData(chatId);
+          // Обновляем состояние сессии для ввода даты
+          sessionManager.setState(chatId, 'entering_expense_date', {
+            amount,
+            description,
+            selectedCategory: sessionManager.getData(chatId).selectedCategory
+          });
+          
+          bot.sendMessage(
+            chatId,
+            'Введите дату транзакции в формате ДД.ММ.ГГГГ или нажмите "Сегодня" для использования текущей даты:',
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    { text: '📅 Сегодня', callback_data: 'date_today' },
+                  ],
+                ],
+              },
+            }
+          );
+          
+          // Создаем обработчик для выбора даты
+          const dateSelectionHandler = async (callbackQuery) => {
+            // Проверяем, что это сообщение от нужного пользователя
+            if (callbackQuery.message.chat.id !== chatId) {
+              return;
+            }
             
+            if (callbackQuery.data === 'date_today') {
+              // Используем текущую дату
+              const sessionData = sessionManager.getData(chatId);
+              await addExpenseTransaction(sessionData.amount, sessionData.description, sessionData.selectedCategory, new Date());
+            }
+          };
+          
+          // Регистрируем обработчик для выбора даты
+          sessionManager.setCallbackHandler(chatId, dateSelectionHandler, bot);
+          
+          // Создаем обработчик для ввода даты вручную
+          const dateMessageHandler = async (msg) => {
+            // Проверяем, что это сообщение от нужного пользователя
+            if (msg.chat.id !== chatId) {
+              return;
+            }
+            
+            const dateText = msg.text.trim();
+            const dateParts = dateText.split('.');
+            
+            if (dateParts.length !== 3) {
+              bot.sendMessage(chatId, 'Пожалуйста, введите дату в формате ДД.ММ.ГГГГ');
+              return;
+            }
+            
+            const day = parseInt(dateParts[0], 10);
+            const month = parseInt(dateParts[1], 10) - 1; // Месяцы в JavaScript начинаются с 0
+            const year = parseInt(dateParts[2], 10);
+            
+            const date = new Date(year, month, day);
+            
+            // Проверяем корректность даты
+            if (isNaN(date.getTime())) {
+              bot.sendMessage(chatId, 'Пожалуйста, введите корректную дату в формате ДД.ММ.ГГГГ');
+              return;
+            }
+            
+            const sessionData = sessionManager.getData(chatId);
+            await addExpenseTransaction(sessionData.amount, sessionData.description, sessionData.selectedCategory, date);
+          };
+          
+          // Регистрируем обработчик для ввода даты
+          sessionManager.setMessageHandler(chatId, dateMessageHandler, bot);
+        };
+        
+        // Функция для добавления расхода с указанной датой
+        const addExpenseTransaction = async (amount, description, selectedCategory, date) => {
+          try {
             logger.info(`Добавление расхода`, { 
               chatId, 
               amount,
-              category: sessionData.selectedCategory.id,
-              description
+              category: selectedCategory.id,
+              description,
+              date
             });
             
             // Получаем актуальный токен из менеджера сессий
@@ -477,10 +663,11 @@ export async function handleAddTransaction(chatId, token) {
               `${SERVER_URL}/api/transactions`,
               {
                 amount: -amount,
-                category_id: sessionData.selectedCategory.isCustom 
-                  ? `custom_${sessionData.selectedCategory.id}` 
-                  : sessionData.selectedCategory.id,
+                category_id: selectedCategory.isCustom 
+                  ? `custom_${selectedCategory.id}` 
+                  : selectedCategory.id,
                 description: description || null,
+                date: date.toISOString()
               },
               { headers: { Authorization: `Bearer ${currentToken}` } }
             );
@@ -498,9 +685,16 @@ export async function handleAddTransaction(chatId, token) {
                 .join(' > ');
             }
 
+            // Форматируем дату для отображения
+            const formatter = new Intl.DateTimeFormat('ru-RU', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            
             bot.sendMessage(
               chatId,
-              `✅ Расход успешно добавлен!\n\n💰 Сумма: ${formatAmount(-amount)}\n📂 Категория: ${categoryText}\n📝 Описание: ${description || 'нет'}${
+              `✅ Расход успешно добавлен!\n\n💰 Сумма: ${formatAmount(-amount)}\n📂 Категория: ${categoryText}\n📝 Описание: ${description || 'нет'}\n📅 Дата: ${formatter.format(date)}${
                 newBalance !== null ? `\n\n💼 Новый баланс: ${formatAmount(newBalance)}` : ''
               }`
             );
